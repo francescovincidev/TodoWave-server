@@ -42,7 +42,7 @@ class User extends User_validation
     if ($stmt->execute()) {
       $user_id = mysqli_insert_id($db); // Ottieni l'ID generato
       http_response_code(201); // CREATO con successo
-      echo json_encode(['message' => 'Utente registrato con successo', 'logged_id' => $user_id, 'username' => $this->username]);
+      echo json_encode(['message' => 'Registrazione avvenuta con successo', 'logged_id' => $user_id, 'username' => $this->username]);
     } else {
       http_response_code(500); // Errore del server
       echo json_encode(['errors' => 'Errore durante la registrazione']);
@@ -80,7 +80,7 @@ class User extends User_validation
         if (password_verify($this->password, $hashedPassword)) {
 
           http_response_code(201);
-          echo json_encode(['logged_id' => $user_id, 'username' => $username]);
+          echo json_encode(['message' => 'Login avvenuto con successo', 'logged_id' => $user_id, 'username' => $username]);
         } else {
           http_response_code(400); // Errore negli input
           $errors['inputs'][] = "Accesso non valido, email o password errati";

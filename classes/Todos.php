@@ -21,9 +21,10 @@ class Todos extends Todos_validation
                 $todos[] = $row; // Aggiungi ogni riga al tuo array di risultati
             }
             echo json_encode($todos);
+            http_response_code(200);
         } else {
             http_response_code(500); // Errore del server
-            echo json_encode(['errors' => 'Errore durante la registrazione']);
+            echo json_encode(['error' => 'Errore durante la ricerca dei todo']);
         }
         $stmt->close();
     }
@@ -45,18 +46,18 @@ class Todos extends Todos_validation
         if ($stmt->execute()) {
 
             http_response_code(201); // CREATO con successo
-            echo json_encode(['message' => 'Utente registrato con successo', 'logged_id' => $user_id]);
+            echo json_encode(['message' => 'Todo creato']);
         } else {
             http_response_code(500); // Errore del server
 
             // return false; // Ritorna false in caso di errore
-            echo json_encode(['Errors' => "Errore nell'inserimenti del todo"]);
+            echo json_encode(['error' => "Errore nell'inserimento del todo"]);
         }
 
         $stmt->close();
     }
 
-    public function updateTodo($todo_id, $title, $description, $deadline, $completed)
+    public function updateTodo($todo_id, $title, $description, $deadline, $completed, $user_id)
     {
         $errors = $this->create_update_Todo_validation($todo_id, $title, $description, $deadline, $completed);
         if (!empty($errors)) {
@@ -66,59 +67,85 @@ class Todos extends Todos_validation
         }
 
         $db = $this->connect();
+        $currentStmt = $db->prepare("SELECT title, description, deadline, completed FROM todos WHERE todo_id=? AND user_id=?");
+        $currentStmt->bind_param("ii", $todo_id, $user_id);
+        $currentStmt->execute();
+        $currentStmt->bind_result($currentTitle, $currentDescription, $currentDeadline, $currentCompleted);
+        $currentStmt->fetch();
+        $currentStmt->close();
 
-        $stmt = $db->prepare("UPDATE todos SET title=?, description=?, deadline=?, completed=? WHERE todo_id=?");
-        $stmt->bind_param("sssii", $title, $description, $deadline, $completed, $todo_id);
+
+        // Verifica se i dati sono stati effettivamente modificati
+        if ($title === $currentTitle && $description === $currentDescription && $deadline === $currentDeadline && $completed === $currentCompleted) {
+            http_response_code(200); // OK
+            echo json_encode(['message' => 'Nessuna modifica effettuata']);
+        } else {
+            // Esegui l'aggiornamento solo se ci sono modifiche effettive
+            $stmt = $db->prepare("UPDATE todos SET title=?, description=?, deadline=?, completed=? WHERE todo_id=? AND user_id=?");
+            $stmt->bind_param("sssiii", $title, $description, $deadline, $completed, $todo_id, $user_id);
+
+            if ($stmt->execute()) {
+                if ($stmt->affected_rows > 0) {
+                    http_response_code(200); // OK
+                    echo json_encode(['message' => 'Todo aggiornato con successo']);
+                } else {
+                    http_response_code(404); // Non trovato
+                    echo json_encode(['error' => 'Impossibile modificare todo']);
+                }
+            } else {
+                http_response_code(500); // Errore del server
+                echo json_encode(['error' => "Errore nell'aggiornamento del todo"]);
+            }
+
+            $stmt->close();
+        }
+    }
+
+    public function updateTodoCompleted($todo_id, $completed, $user_id)
+    {
+
+        $db = $this->connect();
+
+        $stmt = $db->prepare("UPDATE todos SET completed=? WHERE todo_id=? AND user_id=?");
+        $stmt->bind_param("iii", $completed, $todo_id, $user_id);
 
         if ($stmt->execute()) {
-            http_response_code(200); // OK
-            echo json_encode(['message' => 'Todo aggiornato con successo']);
+            if ($stmt->affected_rows > 0) {
+                http_response_code(200); // OK
+                echo json_encode(['message' => 'Todo aggiornato con successo']);
+            } else {
+                http_response_code(404); // Non trovato
+                echo json_encode(['error' => 'Impossibile modificare todo']);
+                exit;
+            }
         } else {
             http_response_code(500); // Errore del server
-            echo json_encode(['errors' => "Errore nell'aggiornamento del todo"]);
+            echo json_encode(['error' => "Errore nell'aggiornamento del todo"]);
         }
+
 
         $stmt->close();
     }
 
-    public function updateTodoCompleted($todo_id, $completed)
-    {
-        // $errors = $this->createTodo_validation($todo_id, $title, $description, $deadline, $completed);
-        // if (!empty($errors)) {
-        //     http_response_code(400); // Bad Request
-        //     echo json_encode(['errors' => $errors]);
-        //     exit;
-        // }
-
-        $db = $this->connect();
-
-        $stmt = $db->prepare("UPDATE todos SET completed=? WHERE todo_id=?");
-        $stmt->bind_param("ii", $completed, $todo_id);
-
-        if ($stmt->execute()) {
-            http_response_code(200); // OK
-            echo json_encode(['message' => 'Todo aggiornato con successo']);
-        } else {
-            http_response_code(500); // Errore del server
-            echo json_encode(['errors' => "Errore nell'aggiornamento del todo"]);
-        }
-
-        $stmt->close();
-    }
-
-    public function deleteTodo($todo_id)
+    public function deleteTodo($todo_id, $user_id)
     {
         $db = $this->connect();
 
-        $stmt = $db->prepare("DELETE FROM todos WHERE todo_id=?");
-        $stmt->bind_param("i", $todo_id);
+        $stmt = $db->prepare("DELETE FROM todos WHERE todo_id=? AND user_id=?");
+        $stmt->bind_param("ii", $todo_id, $user_id);
 
         if ($stmt->execute()) {
-            http_response_code(200); // OK
-            echo json_encode(['message' => 'Todo eliminato con successo']);
+            if ($stmt->affected_rows > 0) {
+                http_response_code(200); // OK
+                echo json_encode(['message' => 'Todo eliminato con successo']);
+            } else {
+                http_response_code(404); // Non trovato
+                echo json_encode(['error' => "Errore nell'eliminazione del Todo"]);
+                exit;
+            }
         } else {
             http_response_code(500); // Errore del server
-            echo json_encode(['errors' => "Errore durante l'eliminazione del todo"]);
+            echo json_encode(['error' => "Errore nell'eliminazione del Todo"]);
         }
 
         $stmt->close();
