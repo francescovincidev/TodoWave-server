@@ -67,36 +67,42 @@ class Todos extends Todos_validation
         }
 
         $db = $this->connect();
+        $currentStmt = $db->prepare("SELECT title, description, deadline, completed FROM todos WHERE todo_id=? AND user_id=?");
+        $currentStmt->bind_param("ii", $todo_id, $user_id);
+        $currentStmt->execute();
+        $currentStmt->bind_result($currentTitle, $currentDescription, $currentDeadline, $currentCompleted);
+        $currentStmt->fetch();
+        $currentStmt->close();
 
-        $stmt = $db->prepare("UPDATE todos SET title=?, description=?, deadline=?, completed=? WHERE todo_id=? AND user_id=?");
-        $stmt->bind_param("sssiii", $title, $description, $deadline, $completed, $todo_id, $user_id);
 
-        if ($stmt->execute()) {
-            if ($stmt->affected_rows > 0) {
-                http_response_code(200); // OK
-                echo json_encode(['message' => 'Todo aggiornato con successo']);
-            } else {
-                http_response_code(404); // Non trovato
-                echo json_encode(['error' => 'Impossibile modificare todo']);
-                exit;
-            }
+        // Verifica se i dati sono stati effettivamente modificati
+        if ($title === $currentTitle && $description === $currentDescription && $deadline === $currentDeadline && $completed === $currentCompleted) {
+            http_response_code(200); // OK
+            echo json_encode(['message' => 'Nessuna modifica effettuata']);
         } else {
-            http_response_code(500); // Errore del server
-            echo json_encode(['error' => "Errore nell'aggiornamento del todo"]);
+            // Esegui l'aggiornamento solo se ci sono modifiche effettive
+            $stmt = $db->prepare("UPDATE todos SET title=?, description=?, deadline=?, completed=? WHERE todo_id=? AND user_id=?");
+            $stmt->bind_param("sssiii", $title, $description, $deadline, $completed, $todo_id, $user_id);
+
+            if ($stmt->execute()) {
+                if ($stmt->affected_rows > 0) {
+                    http_response_code(200); // OK
+                    echo json_encode(['message' => 'Todo aggiornato con successo']);
+                } else {
+                    http_response_code(404); // Non trovato
+                    echo json_encode(['error' => 'Impossibile modificare todo']);
+                }
+            } else {
+                http_response_code(500); // Errore del server
+                echo json_encode(['error' => "Errore nell'aggiornamento del todo"]);
+            }
+
+            $stmt->close();
         }
-
-
-        $stmt->close();
     }
 
     public function updateTodoCompleted($todo_id, $completed, $user_id)
     {
-        // $errors = $this->createTodo_validation($todo_id, $title, $description, $deadline, $completed);
-        // if (!empty($errors)) {
-        //     http_response_code(400); // Bad Request
-        //     echo json_encode(['errors' => $errors]);
-        //     exit;
-        // }
 
         $db = $this->connect();
 
