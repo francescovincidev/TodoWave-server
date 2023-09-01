@@ -13,8 +13,7 @@ if (strpos($_SERVER['REQUEST_URI'], '/login') !== false) {
         $user_id = $newUser->loginUser();
     } else {
         http_response_code(405); // Metodo non consentito
-        $errors['methods'][] = 'Method not allowed';
-        echo json_encode(['errors' => $errors]);
+        echo json_encode(['error' => 'Metodo non consentito']);
     }
 }
 
@@ -31,7 +30,7 @@ if (strpos($_SERVER['REQUEST_URI'], '/register') !== false) {
         $newUser->registerUser();
     } else {
         http_response_code(405); // Metodo non consentito
-        $errors['methods'][] = 'Method not allowed';
-        echo json_encode(['errors' => $errors]);
+
+        echo json_encode(['error' => 'Metodo non consentito']);
     }
 }
