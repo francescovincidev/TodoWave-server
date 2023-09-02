@@ -25,9 +25,11 @@ if (strpos($_SERVER['REQUEST_URI'], '/create') !== false) {
         $description = $inputData['description'];
         $deadline = $inputData['deadline'] ? $inputData['deadline'] : null;
         $completed = $inputData['completed'];
+        $tags_add = $inputData['tags_add'];
+        $tags_remove = $inputData['tags_remove'];
 
         $newTodos = new Todos();
-        $newTodos->createTodo($user_id, $title, $description, $deadline, $completed);
+        $newTodos->createTodo($user_id, $title, $description, $deadline, $completed, $tags_add, $tags_remove);
     } else {
         http_response_code(405); // Metodo non consentito
         echo json_encode(['error' => 'Metodo non consentito']);
@@ -43,6 +45,8 @@ if (strpos($_SERVER['REQUEST_URI'], '/update') !== false) {
         $todo_id = $inputData['todo_id'];
         $completed = $inputData['completed'];
         $user_id = $inputData['user_id'];
+
+
 
         $newTodos = null;
 
@@ -62,8 +66,11 @@ if (strpos($_SERVER['REQUEST_URI'], '/update') !== false) {
             $title = $inputData['title'];
             $description = $inputData['description'];
             $deadline = $inputData['deadline'] ? $inputData['deadline'] : null;
+            $tags_add = $inputData['tags_add'];
+            $tags_remove = $inputData['tags_remove'];
 
-            $newTodos->updateTodo($todo_id, $title, $description, $deadline, $completed, $user_id);
+
+            $newTodos->updateTodo($todo_id, $title, $description, $deadline, $completed, $tags_add, $tags_remove, $user_id);
         }
     } else {
         http_response_code(405); // Metodo non consentito
