@@ -18,6 +18,7 @@ class Tags extends Tags_validation
             while ($row = $result->fetch_assoc()) {
                 $tags[] = $row; // Aggiungi ogni riga al tuo array di risultati
             }
+            // var_dump($tags);
             echo json_encode($tags);
             http_response_code(200);
         } else {
@@ -101,26 +102,53 @@ class Tags extends Tags_validation
         $stmt->close();
     }
 
-    public function deleteTag($tag_id, $user_id)
+    public function deleteTags($tag_ids, $user_id)
     {
         $db = $this->connect();
 
-        $stmt = $db->prepare("DELETE FROM tags WHERE tag_id = ? AND user_id = ?");
-        $stmt->bind_param("ii", $tag_id, $user_id);
+        // Inizia la transazione
+        $db->begin_transaction();
 
-        if ($stmt->execute()) {
-            if ($stmt->affected_rows > 0) {
-                http_response_code(200); // OK
-                echo json_encode(['message' => 'Tag eliminato con successo']);
-            } else {
-                http_response_code(404); // Non trovato
-                echo json_encode(['error' => 'Impossibile eliminare il tag']);
+        try {
+            // Elimina i collegamenti nella tabella todo_tag per ogni ID di tag
+            foreach ($tag_ids as $tag_id) {
+                // Elimina i collegamenti nella tabella todo_tag
+                $stmt = $db->prepare("DELETE FROM todo_tag WHERE tag_id = ?");
+                $stmt->bind_param("i", $tag_id);
+
+                if (!$stmt->execute()) {
+                    throw new Exception("Errore nell'eliminazione dei collegamenti nella tabella todo_tag");
+                }
+
+                $stmt->close();
             }
-        } else {
+
+            // Ora elimina i tag dalla tabella tags
+            foreach ($tag_ids as $tag_id) {
+                $stmt = $db->prepare("DELETE FROM tags WHERE tag_id = ? AND user_id = ?");
+                $stmt->bind_param("ii", $tag_id, $user_id);
+
+                if (!$stmt->execute()) {
+                    throw new Exception("Errore nell'eliminazione dei tag");
+                }
+
+                $stmt->close();
+            }
+
+            // Se tutte le eliminazioni hanno successo, effettua il commit della transazione
+            $db->commit();
+
+            http_response_code(200); // OK
+            echo json_encode(['message' => 'Tutti i tag selezionati sono stati eliminati con successo']);
+        } catch (Exception $e) {
+            // Se si verifica un errore in una delle eliminazioni, effettua il rollback della transazione
+            $db->rollback();
+
             http_response_code(500); // Errore del server
-            echo json_encode(['error' => "Errore nell'eliminazione del tag"]);
+            echo json_encode(['error' => $e->getMessage()]);
         }
 
-        $stmt->close();
+        // Chiudi la connessione
+        $db->close();
     }
 }
