@@ -20,6 +20,15 @@ class User_validation
             $errors['inputs'][] = "Tutti i campi sono obbligatori";
         }
 
+        //USERNAME
+        if (strlen($username) > 20) {
+            $errors['usernames'][] = "L'username non puo essere piu lungo di 20 caratteri";
+        }
+
+        if (strlen($username) < 2) {
+            $errors['usernames'][] = "L'username non puo essere un solo carattere";
+        }
+
         // EMAIL
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors['emails'][] = "L'indirizzo email non è valido";
@@ -38,7 +47,7 @@ class User_validation
             }
         } else {
             http_response_code(500); // Errore del server
-            echo json_encode(['errors' => 'Errore durante la registrazione']);
+            echo json_encode(['error' => 'Errore durante la registrazione']);
         }
         $stmt->close();
 

@@ -18,7 +18,7 @@ class Tags extends Tags_validation
             while ($row = $result->fetch_assoc()) {
                 $tags[] = $row; // Aggiungi ogni riga al tuo array di risultati
             }
-            // var_dump($tags);
+
             echo json_encode($tags);
             http_response_code(200);
         } else {
@@ -39,24 +39,6 @@ class Tags extends Tags_validation
 
         $db = $this->connect();
 
-        // Verifica se l'utente ha già 10 tag
-        $db = $this->connect();
-        $countStmt = $db->prepare("SELECT COUNT(*) AS tag_count FROM tags WHERE user_id = ?");
-        $countStmt->bind_param("i", $user_id);
-        if ($countStmt->execute()) {
-            $countStmt->bind_result($tag_count);
-            $countStmt->fetch();
-            if ($tag_count >= 10) {
-                http_response_code(400); // Bad Request
-                echo json_encode(['error' => 'Un utente può avere al massimo 10 tag.']);
-                exit;
-            }
-        } else {
-            http_response_code(500); // Errore del server
-            echo json_encode(['error' => "Errore nell'inserimento del tag"]);
-            exit;
-        }
-        $countStmt->close();
 
         $stmt = $db->prepare("INSERT INTO tags (user_id, tag_name) VALUES (?, ?)");
         $stmt->bind_param("is", $user_id, $tag_name);
@@ -72,35 +54,6 @@ class Tags extends Tags_validation
         $stmt->close();
     }
 
-    public function updateTag($tag_id, $user_id, $new_tag_name)
-    {
-        $errors = $this->validateTag($user_id, $new_tag_name); // Implementa la tua validazione personalizzata
-        if (!empty($errors)) {
-            http_response_code(400); // Bad Request
-            echo json_encode(['errors' => $errors]);
-            exit;
-        }
-
-        $db = $this->connect();
-
-        $stmt = $db->prepare("UPDATE tags SET tag_name = ? WHERE tag_id = ? AND user_id = ?");
-        $stmt->bind_param("sii", $new_tag_name, $tag_id, $user_id);
-
-        if ($stmt->execute()) {
-            if ($stmt->affected_rows > 0) {
-                http_response_code(200); // OK
-                echo json_encode(['message' => 'Tag aggiornato con successo']);
-            } else {
-                http_response_code(404); // Non trovato
-                echo json_encode(['error' => 'Impossibile modificare il tag']);
-            }
-        } else {
-            http_response_code(500); // Errore del server
-            echo json_encode(['error' => "Errore nell'aggiornamento del tag"]);
-        }
-
-        $stmt->close();
-    }
 
     public function deleteTags($tag_ids, $user_id)
     {
