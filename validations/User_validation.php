@@ -34,6 +34,11 @@ class User_validation
             $errors['emails'][] = "L'indirizzo email non è valido";
         }
 
+        if (strlen($email) > 255) {
+            $errors['emails'][] = "L'indirizzo email è troppo lungo";
+        }
+
+
         //verifichiamo che l'email non sia già usata
         $stmt = $db->prepare("SELECT email FROM users WHERE email = ?");
         $stmt->bind_param("s", $email);
@@ -55,6 +60,10 @@ class User_validation
         //PASSWORD
         if (strlen($password) < 8) {
             $errors['passwords'][] = "La password deve essere lunga almeno 8 caratteri";
+        }
+
+        if (strlen($password) > 255) {
+            $errors['passwords'][] = "La password è troppo lunga";
         }
 
         if ($password !== $passwordRepeat) {

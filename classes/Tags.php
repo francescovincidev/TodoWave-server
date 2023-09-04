@@ -16,7 +16,7 @@ class Tags extends Tags_validation
         if ($stmt->execute()) {
             $result = $stmt->get_result();
             while ($row = $result->fetch_assoc()) {
-                $tags[] = $row; // Aggiungi ogni riga al tuo array di risultati
+                $tags[] = $row; // Aggiunge ogni riga all'array tags
             }
 
             echo json_encode($tags);
@@ -30,7 +30,7 @@ class Tags extends Tags_validation
 
     public function createTag($user_id, $tag_name)
     {
-        $errors = $this->validateTag($user_id, $tag_name); // Implementa la tua validazione personalizzata
+        $errors = $this->validateTag($user_id, $tag_name);
         if (!empty($errors)) {
             http_response_code(400); // Bad Request
             echo json_encode(['errors' => $errors]);
@@ -63,14 +63,15 @@ class Tags extends Tags_validation
         $db->begin_transaction();
 
         try {
-            // Elimina i collegamenti nella tabella todo_tag per ogni ID di tag
+
             foreach ($tag_ids as $tag_id) {
                 // Elimina i collegamenti nella tabella todo_tag
                 $stmt = $db->prepare("DELETE FROM todo_tag WHERE tag_id = ?");
                 $stmt->bind_param("i", $tag_id);
 
                 if (!$stmt->execute()) {
-                    throw new Exception("Errore nell'eliminazione dei collegamenti nella tabella todo_tag");
+
+                    echo json_encode(['error' => "Errore nell'eliminazione dei tag"]);
                 }
 
                 $stmt->close();
@@ -82,7 +83,8 @@ class Tags extends Tags_validation
                 $stmt->bind_param("ii", $tag_id, $user_id);
 
                 if (!$stmt->execute()) {
-                    throw new Exception("Errore nell'eliminazione dei tag");
+
+                    echo json_encode(['error' => "Errore nell'eliminazione dei tag"]);
                 }
 
                 $stmt->close();
@@ -101,7 +103,6 @@ class Tags extends Tags_validation
             echo json_encode(['error' => $e->getMessage()]);
         }
 
-        // Chiudi la connessione
         $db->close();
     }
 }

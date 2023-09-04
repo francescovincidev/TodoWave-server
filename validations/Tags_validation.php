@@ -17,8 +17,8 @@ class Tags_validation
         }
 
         // TAG_NAME
-        if (empty($tag_name)) {
-            $errors['tag_names'][] = "Il nome del tag non può essere vuoto";
+        if (strlen($tag_name) < 3) {
+            $errors['tag_names'][] = "Il nome del tag deve essere almeno 3 caratteri";
         } elseif (strlen($tag_name) > 20) {
             $errors['tag_names'][] = "Il nome del tag non può essere più lungo di 20 caratteri";
         }
@@ -32,7 +32,7 @@ class Tags_validation
             $countStmt->fetch();
             if ($tag_count >= 10) {
                 http_response_code(400); // Bad Request
-                // echo json_encode(['error' => 'Un utente può avere al massimo 10 tag.']);
+
                 $errors['tag_names'][] = "Un utente può avere al massimo 10 tag";
             }
         } else {

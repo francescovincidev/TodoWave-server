@@ -65,8 +65,6 @@ class User extends User_validation
       exit;
     }
 
-
-
     $stmt = $db->prepare("SELECT username, user_id, password FROM users WHERE email = ?");
     $stmt->bind_param("s", $this->email);
     if ($stmt->execute()) {

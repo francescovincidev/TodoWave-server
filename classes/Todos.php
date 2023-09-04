@@ -21,11 +21,11 @@ class Todos extends Todos_validation
 
             while ($row = $result->fetch_assoc()) {
 
-                // Per ogni todo, ottieni i tag associati
+                // Prendiamo l'id per prendere i tags associti
                 $todo_id = $row['todo_id'];
                 $tags = $this->getTagsForTodo($db, $todo_id);
 
-                // Aggiungi i todo con i relativi tag all'array dei risultati
+                // Aggiungiamo tags ai todos
                 $row['tags'] = $tags;
                 $todos[] = $row;
             }
@@ -74,7 +74,7 @@ class Todos extends Todos_validation
             $checkStmt->fetch();
             $checkStmt->close();
 
-            // Se il collegamento non esiste, esegui l'inserimento
+            // Se il collegamento non esiste, esegue l'inserimento
             if ($count == 0) {
                 $tagAddStmt->bind_param("ii", $todo_id, $tag_id);
                 if ($tagAddStmt->execute()) {
@@ -90,12 +90,12 @@ class Todos extends Todos_validation
         }
 
         foreach ($tags_remove as $tag_id) {
-            // Rimuovi il collegamento tra il todo e il tag
+            // Rimuove il collegamento tra il todo e il tag
             $tagRemoveStmt->bind_param("ii", $todo_id, $tag_id);
             if (!$tagRemoveStmt->execute()) {
                 $errorOccurred = true;
             } else {
-                // Verifica se almeno una riga è stata colpita dalla rimozione
+                // Verifica se almeno un tag è stato rimosso
                 if ($tagRemoveStmt->affected_rows > 0) {
                     $tagModified = true; // Se viene rimosso almeno un tag, i tag sono stati modificati
                 }
@@ -116,7 +116,6 @@ class Todos extends Todos_validation
             exit;
         }
 
-        // Connessione al database
         $db = $this->connect();
 
         // Verifica se è possibile avviare una transazione
@@ -124,9 +123,6 @@ class Todos extends Todos_validation
             $tagModified = false;
             $errorOccurred = false;
 
-            // Chiamata a upTags per gestire l'aggiunta/rimozione dei tag
-
-            // Resto del codice per la creazione del todo
             $stmt = $db->prepare("INSERT INTO todos (user_id, title, description, deadline, completed) VALUES (?, ?, ?, ?, ?)");
             $stmt->bind_param("isssi", $user_id, $title, $description, $deadline, $completed);
 
@@ -143,12 +139,10 @@ class Todos extends Todos_validation
                 echo json_encode(['error' => "Errore nell'inserimento del todo"]);
             }
 
-            // Chiudi tutte le istruzioni preparate alla fine
-            if ($stmt !== null) {
-                $stmt->close();
-            }
+
+            $stmt->close();
         } else {
-            // Se non è possibile avviare la transazione, restituisci un errore
+
             http_response_code(500); // Errore del server
         }
     }
@@ -162,7 +156,7 @@ class Todos extends Todos_validation
             exit;
         }
 
-        // Connessione al database
+
         $db = $this->connect();
 
         // Verifica se è possibile avviare una transazione
@@ -172,7 +166,7 @@ class Todos extends Todos_validation
 
             // Chiamata a upTags per gestire l'aggiunta/rimozione dei tag
             $this->upTags($db, $todo_id, $tags_add, $tags_remove, $tagModified, $errorOccurred);
-            // var_dump('AA  ' . $tagModified);
+
 
             // Ottieni i dati correnti del todo
             $currentStmt = $db->prepare("SELECT title, description, deadline, completed FROM todos WHERE todo_id=? AND user_id=?");
@@ -221,7 +215,7 @@ class Todos extends Todos_validation
                 $stmt->close();
             }
         } else {
-            // Se non è possibile avviare la transazione, restituisci un errore
+
             http_response_code(500); // Errore del server
         }
     }
@@ -255,7 +249,7 @@ class Todos extends Todos_validation
     {
         $db = $this->connect();
 
-        // Inizia la transazione
+
         $db->begin_transaction();
 
         // Prima elimina le righe correlate dalla tabella "todo_tag"
@@ -281,7 +275,7 @@ class Todos extends Todos_validation
                 echo json_encode(['error' => "Errore nell'eliminazione del Todo"]);
             }
         } else {
-            // Annulla la transazione in caso di errore
+
             $db->rollback();
             http_response_code(500); // Errore del server
             echo json_encode(['error' => "Errore nell'eliminazione del Todo"]);

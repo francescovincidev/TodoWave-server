@@ -41,7 +41,7 @@ if ($db->query($sql_users) === TRUE) {
     echo "Errore nella creazione della tabella 'users': " . $db->error . "<br>";
 }
 
-// Creazione tabella to-dos
+// Creazione tabella todos
 $sql_todos = "CREATE TABLE todos (
     todo_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED NOT NULL,
@@ -87,9 +87,6 @@ if ($db->query($sql_todo_tag) === TRUE) {
 } else {
     echo "Errore nella creazione della tabella 'todo_tag': " . $db->error . "<br>";
 }
-
-
-
 
 // Chiusura della connessione
 $db->close();
