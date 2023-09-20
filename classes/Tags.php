@@ -69,11 +69,6 @@ class Tags extends Tags_validation
                 $stmt = $db->prepare("DELETE FROM todo_tag WHERE tag_id = ?");
                 $stmt->bind_param("i", $tag_id);
 
-                if (!$stmt->execute()) {
-
-                    echo json_encode(['error' => "Errore nell'eliminazione dei tag"]);
-                }
-
                 $stmt->close();
             }
 
@@ -81,11 +76,6 @@ class Tags extends Tags_validation
             foreach ($tag_ids as $tag_id) {
                 $stmt = $db->prepare("DELETE FROM tags WHERE tag_id = ? AND user_id = ?");
                 $stmt->bind_param("ii", $tag_id, $user_id);
-
-                if (!$stmt->execute()) {
-
-                    echo json_encode(['error' => "Errore nell'eliminazione dei tag"]);
-                }
 
                 $stmt->close();
             }
@@ -100,7 +90,7 @@ class Tags extends Tags_validation
             $db->rollback();
 
             http_response_code(500); // Errore del server
-            echo json_encode(['error' => $e->getMessage()]);
+            echo json_encode(['error' => "Errore nell'eliminazione dei tag"]);
         }
 
         $db->close();
