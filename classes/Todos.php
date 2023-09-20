@@ -127,9 +127,9 @@ class Todos extends Todos_validation
             $stmt->bind_param("isssi", $user_id, $title, $description, $deadline, $completed);
 
             if ($stmt->execute()) {
-                $db->commit();
                 $todo_id = $stmt->insert_id;
                 $this->upTags($db, $todo_id, $tags_add, $tags_remove, $tagModified, $errorOccurred);
+                $db->commit();
                 http_response_code(201); // CREATO con successo
                 echo json_encode(['message' => 'Todo creato con successo']);
             } else {
